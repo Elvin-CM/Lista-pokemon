@@ -1,57 +1,48 @@
-name: Deploy Vite SPA to GitHub Pages
+name: Despliegue a Github Pages del SPA con Vite
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 env:
-  DEPLOY_BASE_URL: ${{ vars.DEPLOY_BASE_URL }}
-  NODE_VERSION: 20
-
+  DEPLOY_BASE_URL: ${{vars.DEPLOY_BASE_URL}}
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.github_pages.outputs.url }}
 
+    runs-on: ubuntu-latest
     steps:
-      - name: 1. Clonar repositorio
+      - name: Clonar Repositorio
         uses: actions/checkout@v4
-
-      - name: 2. Instalar Node.js
+      - name: Configurar NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 3. Instalar dependencias
+          node-version: '20'
+          cache: 'npm'
+      - name: Instalar Dependencias
         run: npm install
-
-      - name: 4. Verificar DEPLOY_BASE_URL
-        run: echo "DEPLOY_BASE_URL = $DEPLOY_BASE_URL"
-
-      - name: 5. Build proyecto con Vite
+      - name: Verificar Variables de Ambiente
+        run : echo "DEPLOY_BASE_URL $DEPLOY_BASE_URL"
+      - name: Compilar Proyecto
         run: npm run build
-
-      - name: 6. Configurar GitHub Pages
+      - name: Generar 404 html
+        run: cp ./dist/index.html ./dist/404.html
+      - name: Configurar Github Pages
         uses: actions/configure-pages@v5
-
-      - name: 7. Subir artifact dist
+      - name: Subir Compilado a Github Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
-
-      - name: 8. Publicar a GitHub Pages
+          path: './dist'
+      - name: Publicar Página en Github Pages
         id: deployment
         uses: actions/deploy-pages@v4
